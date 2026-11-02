@@ -935,8 +935,9 @@ function load() {
     loadProblem = true; return normState({});
   }
 }
+let unsaved = false;      // true between an edit and the moment it's written to storage
 function persist() {
-  try { localStorage.setItem(KEY, JSON.stringify(state)); return true; }
+  try { localStorage.setItem(KEY, JSON.stringify(state)); unsaved = false; return true; }
   catch {
     if (!storageProblem) toast('Your notes couldn’t be saved on this device (storage is full or blocked). Use Lists → Export to back them up.', 9000);
     storageProblem = true; return false;
@@ -1094,7 +1095,7 @@ const current = () => state.notes.find(n => n.id === currentId);
 
 function touch() {
   const n = current(); if (!n) return;
-  n.updated = Date.now();
+  n.updated = Date.now(); unsaved = true;
   saveState('saving');
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => { persist(); renderList(); renderFilters(); saveState('saved'); }, 400);
@@ -1833,7 +1834,20 @@ function crumple(el, done) {
 
 /* ---------- Boot ---------- */
 // save immediately if the page is closed or hidden before the autosave delay
-const flush = () => { clearTimeout(saveTimer); persist(); };
+// when the page closes, save only if something hasn't been saved yet (never write an outdated copy over newer notes)
+const flush = () => { clearTimeout(saveTimer); if (unsaved) persist(); };
+// notes changed in another tab or window: pick them up here instead of keeping a stale copy
+window.addEventListener('storage', e => {
+  if (e.key !== KEY || !e.newValue || unsaved) return;
+  try {
+    const fresh = normState(JSON.parse(e.newValue));
+    const focusedInNote = document.activeElement && $('editor').contains(document.activeElement);
+    state.notes = fresh.notes; state.speakers = fresh.speakers; state.eventTypes = fresh.eventTypes;
+    if (!state.notes.some(n => n.id === currentId)) currentId = state.notes[0]?.id || null;
+    renderFilters(); renderList();
+    if (!focusedInNote) renderEditor();          // don't yank the page out from under someone typing
+  } catch {}
+});
 window.addEventListener('pagehide', flush);
 document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && flush());
 $('newBtn').onclick = () => { seedBurst($('newBtn')); newNote(); };
