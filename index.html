@@ -587,6 +587,7 @@ try { const t = JSON.parse(localStorage.getItem('sermon-notes-v1'))?.settings?.t
   .c-main .title-input { padding-right: 150px; }
   .dd-list li > span { display:inline-flex; align-items:center; gap:10px; }
   .dd-list li.danger { color: var(--danger); border-top:1px solid var(--line); margin-top:4px; }
+  .dd-list li.danger svg.ic { color: var(--danger); }      /* trash can matches the red "Delete note" */
   .dd-list li.danger:hover, .dd-list li.danger.act { background: color-mix(in srgb, var(--danger) 10%, transparent); }
   /* deck of cards: actions slide down from behind the button */
   .dd-list.v-deck { --vc: var(--ink); transform-origin: top right; animation: deck-in .35s cubic-bezier(.3,1.3,.5,1); }
@@ -703,6 +704,19 @@ try { const t = JSON.parse(localStorage.getItem('sermon-notes-v1'))?.settings?.t
     .rt-editor { min-height:0; }
     .rt-editor.is-empty::before { content:none; }
   }
+
+  /* date box: drawn like every other box; the real (invisible) date input sits on top and opens the
+     phone's date picker. iPhone Safari can't restyle or misplace it this way. */
+  .date-field { position:relative; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    width:100%; height:40px; padding:0 12px; border:1px solid var(--line); border-radius:12px; background: var(--field);
+    color: var(--ink); cursor:pointer; transition: border-color .15s, box-shadow .15s; }
+  .date-field .date-show { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .date-field svg.ic { color: var(--muted); flex:none; }
+  .date-field:focus-within { border-color: color-mix(in srgb, var(--c) 65%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 16%, transparent); }
+  .date-field input[type="date"] { position:absolute; inset:0; width:100%; height:100%; min-height:0; max-width:none; margin:0; padding:0;
+    border:none; opacity:0; cursor:pointer; -webkit-appearance:none; appearance:none; font-size:16px; background:transparent; box-shadow:none; }
+  @media print { .date-field input { display:none; } .date-field { border:none; padding:0; } }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after, ::backdrop { animation: none !important; transition: none !important; } }
 
   .menu-btn { display:none; }
@@ -1147,11 +1161,13 @@ function renderEditor() {
     <div class="card c-main">
       <div class="note-actions no-print">
         <span class="saved" id="savedMsg"></span>
-        <button id="noteMenuBtn" class="icon" aria-haspopup="menu" aria-expanded="false" aria-label="Note actions: print, copy, duplicate, delete" title="Print, copy, duplicate or delete">${ic('dots')}</button>
+        <button id="noteMenuBtn" class="icon" aria-haspopup="menu" aria-expanded="false" aria-label="Note actions: copy, duplicate, delete" title="Copy, duplicate or delete">${ic('dots')}</button>
       </div>
       <input class="title-input" data-f="title" placeholder="Sermon title…" value="${esc(n.title)}">
       <div class="grid3" style="margin-top:12px">
-        <div><label>Date</label><input type="date" data-f="date" value="${esc(n.date)}"></div>
+        <div><label for="dateInput">Date</label>
+          <div class="date-field"><span class="date-show">${n.date ? fmtDate(n.date) : 'Pick a date'}</span>${ic('calendar')}
+            <input type="date" id="dateInput" data-f="date" value="${esc(n.date)}" aria-label="Date"></div></div>
         <div><label>Time of Day</label>
           <div class="seg ${n.period==='PM'?'pm':''}" id="periodSeg">
             <button type="button" data-p="AM" class="${n.period==='AM'?'on':''}">${ic('sun')} AM</button>
@@ -1205,6 +1221,7 @@ ed.addEventListener('input', e => {
   const t = e.target;
   if (t.id === 'notesEditor' || t.id === 'blockStyle') return;      // the notes document saves itself
   if (t.dataset.f && t.dataset.f !== 'eventType') n[t.dataset.f] = t.value;
+  if (t.dataset.f === 'date') t.parentElement.querySelector('.date-show').textContent = t.value ? fmtDate(t.value) : 'Pick a date';
   if (t.dataset.s) n.speakers[+t.closest('.speaker-row').dataset.i][t.dataset.s] = t.value;
   touch();
 });
@@ -1222,6 +1239,8 @@ ed.addEventListener('change', e => {
   }
 });
 ed.addEventListener('click', e => {
+  // the date box: open the calendar wherever it's tapped (the real date input is invisible on top)
+  const di = e.target.closest('.date-field input'); if (di) { try { di.showPicker(); } catch {} return; }
   const n = current(); if (!n) return;
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.cmd) { rtCommand(b.dataset.cmd, b); return; }
@@ -1489,7 +1508,6 @@ function rtState() {
 
 /* ---------- note actions (the ⋯ menu at the top of a note) ---------- */
 const NOTE_ACTIONS = [
-  { label: 'Print / PDF', value: 'print', icon: 'print' },
   { label: 'Copy as text', value: 'copy', icon: 'copy' },
   { label: 'Duplicate', value: 'duplicate', icon: 'layers' },
   { label: 'Delete note', value: 'delete', icon: 'trash' }];
@@ -1506,6 +1524,7 @@ function noteAction(what) {
   }
   else if (what === 'duplicate') {
     const copy = JSON.parse(JSON.stringify(n)); copy.id = uid(); copy.title = (n.title || 'Untitled') + ' (copy)';
+    copy.date = today(); copy.period = new Date().getHours() < 12 ? 'AM' : 'PM'; copy.updated = Date.now();   // a copy is a new note: today's date
     state.notes.unshift(copy); currentId = copy.id; justAdded = copy.id; persist(); render(); justAdded = null;
     toast('Duplicated. You’re now editing the copy.', 2600);
   }
@@ -1755,7 +1774,7 @@ document.addEventListener('click', e => {
 // formatting buttons must not take the cursor out of the notes
 document.addEventListener('mousedown', e => { if (e.target.closest('.rt-toolbar button')) e.preventDefault(); });
 document.addEventListener('change', e => {
-  if (e.target.matches('[data-f="date"]')) play(e.target, 'tap-flip', 800);
+  if (e.target.matches('[data-f="date"]')) play(e.target.closest('.date-field') || e.target, 'tap-flip', 800);
   if (e.target.matches('label.check input')) play(e.target.closest('label'), 'tap-check', 700);
 });
 
