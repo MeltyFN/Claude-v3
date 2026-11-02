@@ -1,12 +1,12 @@
 {
   "name": "Sermon Notes",
   "short_name": "Sermon Notes",
-  "description": "Take sermon notes with speakers, event types, live dictation and automatic summaries.",
+  "description": "Take sermon notes: scripture, speakers, event types and your own formatted notes.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#FAF9F6",
-  "theme_color": "#14161C",
+  "background_color": "#f6efe4",
+  "theme_color": "#b5523b",
   "icons": [
     {
       "src": "icons/icon-192.png",
