@@ -722,6 +722,84 @@ try { const t = JSON.parse(localStorage.getItem('sermon-notes-v1'))?.settings?.t
   .date-field input[type="date"] { position:absolute; inset:0; width:100%; height:100%; min-height:0; max-width:none; margin:0; padding:0;
     border:none; opacity:0; cursor:pointer; -webkit-appearance:none; appearance:none; font-size:16px; background:transparent; box-shadow:none; }
   @media print { .date-field input { display:none; } .date-field { border:none; padding:0; } }
+
+  /* =================== mobile-first =================== */
+  .tap-fab { animation: fab-tap .5s cubic-bezier(.3,1.6,.5,1); } .tap-fab svg { animation: spin-half .5s ease; }
+  @keyframes fab-tap { 35% { transform: scale(.86) rotate(-6deg); } }
+  .tap-back svg { animation: back-tap .4s ease; } @keyframes back-tap { 40% { transform: translateX(-5px); } }
+  .back-btn, .fab { display:none; }
+  .filter-chips { display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+  .note-item .snip { font-size:.84rem; line-height:1.4; color: var(--muted); margin:6px 0 4px; display:-webkit-box; -webkit-line-clamp:2;
+    -webkit-box-orient:vertical; overflow:hidden; }
+  .note-item .m svg.ic { margin-left:2px; }
+  /* bottom sheets (phones) */
+  .dd-list.sheet { left:0 !important; right:0; bottom:0 !important; top:auto !important; width:100%; max-height:72vh; border-radius:22px 22px 0 0;
+    padding: 18px 10px calc(14px + env(safe-area-inset-bottom)); border-bottom:none; transform-origin: bottom center;
+    box-shadow: 0 0 0 100vmax rgba(10,12,20,.38), 0 -10px 30px -10px rgba(0,0,0,.3); animation: sheet-up .42s cubic-bezier(.2,.9,.25,1) !important; }
+  .dd-list.sheet::before { content:""; position:absolute; top:7px; left:50%; width:38px; height:5px; margin-left:-19px; border-radius:3px; background: var(--line); }
+  .dd-list.sheet.closing { animation: sheet-down .3s ease-in forwards !important; }
+  .dd-list.sheet li { padding:14px 16px; font-size:1.02rem; border-radius:12px; }
+  .dd-list.sheet.v-scroll, .dd-list.sheet.v-horizon { border-top:none; clip-path:none; }
+  @keyframes sheet-up { from { transform: translateY(100%); box-shadow: 0 0 0 100vmax rgba(10,12,20,0); } }
+  @keyframes sheet-down { to { transform: translateY(100%); box-shadow: 0 0 0 100vmax rgba(10,12,20,0); } }
+
+  @media (max-width: 760px) {
+    /* two screens: the list, then the note */
+    html body .layout { display:block; position:relative; }
+    html body aside, html body aside.open { position:absolute; inset:0; transform:none; visibility:visible; border-right:none; background: var(--bg);
+      transition:none; display:block; overflow:auto; }
+    html body main { position:absolute; inset:0; }
+    body.view-list main { display:none; }
+    body.view-note aside { display:none; }
+    body.view-note main { animation: push-in .32s cubic-bezier(.2,.8,.3,1); }
+    body.view-list aside { animation: pop-back .3s cubic-bezier(.2,.8,.3,1); }
+    @keyframes push-in { from { transform: translateX(28%); opacity:.4; } }
+    @keyframes pop-back { from { transform: translateX(-18%); opacity:.5; } }
+    .menu-btn, .menu-btn.x { display:none !important; }
+    body.view-note .back-btn { display:inline-flex; }
+    body.view-note header h1 { display:none; }
+    body.view-note header .spacer { flex:1; }
+    .back-btn { gap:2px; padding:8px 12px 8px 6px; font-weight:700; font-size:1rem; border:none; background:transparent; color: var(--ink); }
+    .back-btn svg.ic { width:22px; height:22px; }
+    #newBtn { display:none; }
+    /* the big + button, where your thumb is */
+    .fab { position:fixed; right: max(18px, env(safe-area-inset-right)); bottom: calc(22px + env(safe-area-inset-bottom)); z-index:20;
+      width:60px; height:60px; border-radius:20px; padding:0; border:none; background: var(--brand); color: var(--on-brand, #fff);
+      box-shadow: 0 12px 26px -10px rgba(20,22,28,.7); }
+    .fab svg.ic { width:28px; height:28px; stroke-width:2.4; }
+    body.view-list .fab { display:inline-flex; animation: fab-in .4s cubic-bezier(.3,1.6,.5,1); }
+    @keyframes fab-in { from { transform: scale(.4); opacity:0; } }
+    body.view-list .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
+    /* notes list screen */
+    .filters { padding:12px 14px 10px; position:sticky; top:0; }
+    .filter-chips { display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; margin: 0 -14px; padding: 2px 14px 2px; }
+    .filter-chips::-webkit-scrollbar { display:none; }
+    .filter-chips .dd { flex:none; width:auto; }
+    .filter-chips .dd-btn { width:auto; border-radius:999px; padding:8px 14px; gap:6px; font-size:.9rem; min-height:38px; }
+    .filter-chips .dd-label { overflow:visible; }
+    #search { min-height:44px; border-radius:14px; font-size:16px; }
+    #noteList { padding: 10px 14px calc(110px + env(safe-area-inset-bottom)); gap:10px; }
+    .note-item { padding:14px 16px; border-radius:16px; }
+    .note-item .t { font-size:1.06rem; }
+    .note-item:hover { transform:none; }
+    .note-item:active { transform: scale(.985); }
+    /* note screen: shorter top card, bigger touch targets */
+    html body .grid3 { grid-template-columns: 1fr 1fr; gap:12px; }
+    html body .grid3 > div:nth-child(3) { grid-column: 1 / -1; }
+    .date-field, .seg, .c-main .dd-btn, .scripture-field input, .speaker-row input { min-height:46px; }
+    .date-field { height:46px; }
+    .speaker-row button.icon { width:46px; height:46px; }
+    #addSpeaker { min-height:40px; }
+    input, select, textarea { font-size:16px; }          /* stops iPhone zooming in when you tap a box */
+    .rt-toolbar button { width:40px; height:40px; }
+    .rt-toolbar .rt-style .dd-btn { height:40px; }
+    #noteMenuBtn { width:42px; height:42px; }
+    /* the Lists window comes up from the bottom */
+    dialog { width:100%; max-width:none; margin: auto 0 0; border-radius:24px 24px 0 0; max-height:88vh; overflow:auto;
+      padding-bottom: calc(22px + env(safe-area-inset-bottom)); }
+    dialog[open] { animation: sheet-up .42s cubic-bezier(.2,.9,.25,1); }
+    dialog .add-row input, dialog .add-row button { min-height:44px; }
+  }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after, ::backdrop { animation: none !important; transition: none !important; } }
 
   .menu-btn { display:none; }
@@ -762,6 +840,7 @@ try { const t = JSON.parse(localStorage.getItem('sermon-notes-v1'))?.settings?.t
 <body>
 <header class="draw">
   <button class="menu-btn icon" id="menuBtn" aria-label="Toggle notes list"><span data-ic="menu"></span></button>
+  <button class="back-btn" id="backBtn" aria-label="Back to all notes"><span data-ic="back"></span>Notes</button>
   <h1><span class="logo"><span data-ic="cross"></span></span><span class="title-text">Sermon Notes</span></h1>
   <div class="spacer"></div>
   <button id="themeBtn" class="icon" title="Theme" aria-label="Theme: automatic"><span data-ic="contrast"></span></button>
@@ -773,11 +852,9 @@ try { const t = JSON.parse(localStorage.getItem('sermon-notes-v1'))?.settings?.t
   <aside id="sidebar">
     <div class="filters">
       <input id="search" placeholder="Search notes, scripture, speakers…">
-      <div class="row">
+      <div class="filter-chips">
         <select id="filterEvent"><option value="">All events</option></select>
         <select id="filterSpeaker"><option value="">All speakers</option></select>
-      </div>
-      <div class="row">
         <select id="filterPeriod">
           <option value="">AM &amp; PM</option><option value="AM">AM only</option><option value="PM">PM only</option>
         </select>
@@ -789,11 +866,12 @@ try { const t = JSON.parse(localStorage.getItem('sermon-notes-v1'))?.settings?.t
     <div id="noteList"></div>
   </aside>
 
-  <main>
+  <main id="main">
     <div id="editor" class="editor"></div>
   </main>
 </div>
 
+<button id="fab" class="fab" aria-label="New note"><span data-ic="plus"></span></button>
 <dialog id="manageDlg" class="draw">
   <h3><span data-ic="person"></span>Saved Speakers</h3>
   <ul class="list-edit" id="speakerList"></ul>
@@ -991,6 +1069,7 @@ const ICONS = {
   tag: '<path d="M3.5 12V4.5H11l9.5 9.5-7 7z"/><circle cx="7.8" cy="8.3" r="1.3"/>',
   archive: '<rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v11h14V9"/><path d="M10 13h4"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  back: '<path d="M15 5l-7 7 7 7"/>',
   chev: '<path d="M6 9.5l6 6 6-6"/>',
   undo: '<path d="M9 5L4 10l5 5"/><path d="M4.5 10H14a5.5 5.5 0 0 1 0 11h-3"/>',
   redo: '<path d="M15 5l5 5-5 5"/><path d="M19.5 10H10a5.5 5.5 0 0 0 0 11h3"/>',
@@ -1077,6 +1156,8 @@ function setSidebar(open) { $('sidebar').classList.toggle('open', open); $('menu
 const HUES = [215, 355, 185, 100, 40, 280, 20, 200, 150, 330, 60];  // navy, burgundy, teal, sage, gold, plum…
 const hue = name => { let h = 0; for (const c of name || '') h = (h * 31 + c.charCodeAt(0)) >>> 0; return HUES[h % HUES.length]; };
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset()*60000).toISOString().slice(0,10); };
+const fmtDateShort = d => { if (!d) return 'Pick a date'; const x = new Date(d + 'T12:00'), o = { weekday: 'short', month: 'short', day: 'numeric' };
+  if (x.getFullYear() !== new Date().getFullYear()) o.year = 'numeric'; return x.toLocaleDateString(undefined, o); };
 const fmtDate = d => d ? new Date(d + 'T12:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'}) : 'No date';
 
 function newNote() {
@@ -1086,7 +1167,7 @@ function newNote() {
     speakers: [{ name: '', role: 'Pastor' }],
     scripture: '', notesHtml: '', updated: Date.now()
   };
-  state.notes.unshift(note); currentId = note.id; justAdded = note.id; persist(); render(); justAdded = null;
+  state.notes.unshift(note); currentId = note.id; justAdded = note.id; persist(); render(); justAdded = null; showNote();
   if (state.notes.length === 1) navigator.storage?.persist?.().catch(() => {});
   setTimeout(() => document.querySelector('.title-input')?.focus(), 0);
 }
@@ -1163,16 +1244,46 @@ function renderList() {
     return `<div class="note-item${cls}" data-id="${n.id}" style="--h:${hue(n.eventType)};--i:${Math.min(idx, 12)}">
       <div class="t">${esc(n.title || 'Untitled sermon')}</div>
       <div><span class="pill-ampm ${n.period === 'PM' ? 'pm' : 'am'}">${n.period === 'PM' ? ic('moon') + ' PM' : ic('sun') + ' AM'}</span>${n.eventType ? `<span class="tag" style="--h:${hue(n.eventType)}">${esc(n.eventType)}</span>` : ''}</div>
-      <div class="m">${ic('calendar')} ${fmtDate(n.date)}</div>
+      ${(() => { const t = previewText(n.notesHtml); return t ? `<div class="snip">${esc(t)}</div>` : ''; })()}
+      <div class="m">${ic('calendar')} ${fmtDate(n.date)}${n.scripture.trim() ? ` · ${ic('book')} ${esc(n.scripture.trim())}` : ''}</div>
       ${names ? `<div class="m">${ic('person')} ${esc(names)}</div>` : ''}
     </div>`;
-  }).join('') : `<div class="empty${anim ? ' in' : ''}">${state.notes.length ? ic('search', 'big-ic') + '<br>No notes match your filters.' : ic('sprout', 'big-ic draw-now') + '<br>No notes yet.<br>Tap “New Note” to start.'}</div>`;
+  }).join('') : `<div class="empty${anim ? ' in' : ''}">${state.notes.length ? ic('search', 'big-ic') + '<br>No notes match your filters.' : ic('sprout', 'big-ic draw-now') + '<br>No notes yet.<br>Tap <b>+</b> to start your first one.'}</div>`;
 }
 
+// a one-line preview of the notes for the list (normal case, no list markers)
+function previewText(html) {
+  if (!html) return '';
+  const tpl = document.createElement('template'); tpl.innerHTML = html;
+  const parts = []; tpl.content.querySelectorAll('h1,h2,h3,p,li,blockquote').forEach(el => { if (!el.querySelector('p,li')) parts.push(el.textContent.trim()); });
+  return parts.filter(Boolean).join(' · ').slice(0, 140);
+}
 $('noteList').addEventListener('click', e => {
   const item = e.target.closest('.note-item'); if (!item) return;
-  currentId = item.dataset.id; render(); setSidebar(false);
+  currentId = item.dataset.id; render(); setSidebar(false); showNote();
 });
+
+/* ---------- phones: two screens, the notes list and the open note (desktop keeps both side by side) ---------- */
+const PHONE = matchMedia('(max-width: 760px)');
+const isPhone = () => PHONE.matches;
+function setView(v) {
+  document.body.classList.toggle('view-note', v === 'note');
+  document.body.classList.toggle('view-list', v !== 'note');
+}
+function showNote() {
+  if (!isPhone() || !current()) return;
+  if (!document.body.classList.contains('view-note')) {
+    setView('note'); $('main').scrollTop = 0;
+    if (history.state?.sn !== 'note') history.pushState({ sn: 'note' }, '');   // so the phone's back gesture returns to the list
+  }
+}
+function showList() {
+  if (history.state?.sn === 'note') history.back();      // popstate below switches the view
+  else setView('list');
+}
+addEventListener('popstate', () => { if (history.state?.sn !== 'note') { setView('list'); renderList(); } });
+if (history.state?.sn === 'note') history.replaceState(null, '');      // a reload always starts on the list
+setView('list');
 ['search','filterEvent','filterSpeaker','filterPeriod','sortBy'].forEach(id =>
   $(id).addEventListener('input', () => { listAnimate = true; renderList(); }));
 
@@ -1198,7 +1309,7 @@ function renderEditor() {
       <input class="title-input" data-f="title" placeholder="Sermon title…" value="${esc(n.title)}">
       <div class="grid3" style="margin-top:12px">
         <div><label for="dateInput">Date</label>
-          <div class="date-field"><span class="date-show">${n.date ? fmtDate(n.date) : 'Pick a date'}</span>${ic('calendar')}
+          <div class="date-field"><span class="date-show">${n.date ? (isPhone() ? fmtDateShort(n.date) : fmtDate(n.date)) : 'Pick a date'}</span>${ic('calendar')}
             <input type="date" id="dateInput" data-f="date" value="${esc(n.date)}" aria-label="Date"></div></div>
         <div><label>Time of Day</label>
           <div class="seg ${n.period==='PM'?'pm':''}" id="periodSeg">
@@ -1253,7 +1364,7 @@ ed.addEventListener('input', e => {
   const t = e.target;
   if (t.id === 'notesEditor' || t.id === 'blockStyle') return;      // the notes document saves itself
   if (t.dataset.f && t.dataset.f !== 'eventType') n[t.dataset.f] = t.value;
-  if (t.dataset.f === 'date') t.parentElement.querySelector('.date-show').textContent = t.value ? fmtDate(t.value) : 'Pick a date';
+  if (t.dataset.f === 'date') t.parentElement.querySelector('.date-show').textContent = t.value ? (isPhone() ? fmtDateShort(t.value) : fmtDate(t.value)) : 'Pick a date';
   if (t.dataset.s) n.speakers[+t.closest('.speaker-row').dataset.i][t.dataset.s] = t.value;
   touch();
 });
@@ -1562,7 +1673,7 @@ function noteAction(what) {
   }
   else if (what === 'delete') {
     if (confirm(`Delete “${n.title || 'Untitled sermon'}” permanently?`)) fallAway(() => {
-      state.notes = state.notes.filter(x => x.id !== n.id); currentId = state.notes[0]?.id || null; persist(); render();
+      state.notes = state.notes.filter(x => x.id !== n.id); currentId = state.notes[0]?.id || null; persist(); render(); showList();
       toast('Note deleted.', 2200);
     });
   }
@@ -1657,9 +1768,15 @@ function openPanel(anchor, items, variant, onPick, selected = -1, quick = false)
   anchor.setAttribute('aria-expanded', 'true');
   anchor.closest('.dd')?.classList.add('open');
 }
+const sheetFor = a => isPhone() && !a.closest('.rt-toolbar') && !a.matches('[data-s], input, textarea');
 function placePanel() {
   if (!PANEL) return;
   const r = PANEL.anchor.getBoundingClientRect(), el = PANEL.el;
+  if (sheetFor(PANEL.anchor)) {
+    el.classList.add('sheet');
+    Object.assign(el.style, { left: '', top: '', bottom: '', minWidth: '', maxHeight: '' });
+    return;
+  }
   el.style.left = Math.max(8, Math.min(r.left, innerWidth - Math.max(r.width, 200) - 8)) + 'px';
   el.style.minWidth = Math.max(r.width, 180) + 'px';
   if (PANEL.anchor.id === 'noteMenuBtn') el.style.left = Math.max(8, r.right - el.offsetWidth) + 'px';   // line up with the button's right edge
@@ -1781,6 +1898,8 @@ const TAPS = [
   ['[data-del-speaker]', null, 'tap-spin-out'],
   ['#addSpeakerBtn, #addEventBtn', null, 'tap-stamp'],
   ['#noteMenuBtn', () => $('noteMenuBtn'), 'tap-dots'],
+  ['#fab', () => $('fab'), 'tap-fab'],
+  ['#backBtn', null, 'tap-back'],
   ['#exportBtn', null, 'tap-drop'],
   ['#importBtn', null, 'tap-lift'],
   ['[data-rm]', null, 'tap-flick'],
@@ -1852,6 +1971,8 @@ window.addEventListener('pagehide', flush);
 document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && flush());
 $('newBtn').onclick = () => { seedBurst($('newBtn')); newNote(); };
 $('menuBtn').onclick = () => setSidebar(!$('sidebar').classList.contains('open'));
+$('backBtn').onclick = () => showList();
+$('fab').onclick = () => { seedBurst($('fab')); newNote(); };
 // swap the placeholder spans in the static HTML for the hand-drawn icons
 document.querySelectorAll('[data-ic]').forEach(el => { el.outerHTML = ic(el.dataset.ic); });
 enhanceSelects();
