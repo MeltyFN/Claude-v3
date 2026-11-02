@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- same as the app's header logo: #14161C tile with a #FAF9F6 round-ended cross -->
+  <rect width="512" height="512" fill="#14161C"/>
+  <g stroke="#FAF9F6" stroke-width="29" stroke-linecap="round" fill="none">
+    <path d="M256 132V380"/>
+    <path d="M184.3 203.8H327.7"/>
+  </g>
+</svg>
