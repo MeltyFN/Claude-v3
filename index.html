@@ -749,6 +749,7 @@ try { const st = JSON.parse(localStorage.getItem('sermon-notes-v1'))?.settings |
   @keyframes fab-tap { 35% { transform: scale(.86) rotate(-6deg); } }
   .tap-back svg { animation: back-tap .4s ease; } @keyframes back-tap { 40% { transform: translateX(-5px); } }
   .back-btn, .fab { display:none; }
+  body.no-notes .filters { display:none; }
   .filter-chips { display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
   .note-item .snip { font-size:.84rem; line-height:1.4; color: var(--muted); margin:6px 0 4px; display:-webkit-box; -webkit-line-clamp:2;
     -webkit-box-orient:vertical; overflow:hidden; }
@@ -795,6 +796,7 @@ try { const st = JSON.parse(localStorage.getItem('sermon-notes-v1'))?.settings |
     .filters { padding:12px 14px 10px; position:sticky; top:0; }
     .filter-chips { display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; margin: 0 -14px; padding: 2px 14px 2px; }
     .filter-chips::-webkit-scrollbar { display:none; }
+    .filter-chips { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
     .filter-chips .dd { flex:none; width:auto; }
     .filter-chips .dd-btn { width:auto; border-radius:999px; padding:8px 14px; gap:6px; font-size:.9rem; min-height:38px; }
     .filter-chips .dd-label { overflow:visible; }
@@ -841,7 +843,9 @@ try { const st = JSON.parse(localStorage.getItem('sermon-notes-v1'))?.settings |
     header h1 .logo { width:30px; height:30px; }
     #manageBtn .lbl { display:none; }
     .grid3 { grid-template-columns:1fr; }
-    .speaker-row { grid-template-columns:1fr 1fr auto; }
+    .speaker-row { grid-template-columns:1fr auto; }
+    .speaker-row input[data-s="name"] { grid-column:1 / -1; }   /* full names fit: name on its own line, role + remove below */
+    #speakers .speaker-row + .speaker-row { padding-top:10px; border-top:1px dashed var(--line); }
     main { padding:14px; padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right));
       padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
     .card { padding:16px; }
@@ -1243,6 +1247,13 @@ function renderFilters() {
 }
 
 let listAnimate = true, justAdded = null;
+// each note's searchable text and preview, worked out once and reused until that note's text changes
+const textCache = new Map();
+function noteText(n) {
+  let c = textCache.get(n.id);
+  if (!c || c.html !== n.notesHtml) { c = { html: n.notesHtml, text: htmlToText(n.notesHtml).toLowerCase(), preview: previewText(n.notesHtml) }; textCache.set(n.id, c); }
+  return c;
+}
 function renderList() {
   const q = $('search').value.toLowerCase().trim();
   const ev = $('filterEvent').value, sp = $('filterSpeaker').value, pd = $('filterPeriod').value;
@@ -1251,7 +1262,7 @@ function renderList() {
     if (pd && n.period !== pd) return false;
     if (sp && !n.speakers.some(s => s.name.trim() === sp)) return false;
     if (q) {
-      const hay = [n.title, n.eventType, n.scripture, htmlToText(n.notesHtml),
+      const hay = [n.title, n.eventType, n.scripture, noteText(n).text,
         ...n.speakers.map(s => s.name + ' ' + s.role)].join(' ').toLowerCase();
       if (!hay.includes(q)) return false;
     }
@@ -1261,13 +1272,14 @@ function renderList() {
   notes.sort((a, b) => $('sortBy').value === 'old' ? key(a).localeCompare(key(b)) : key(b).localeCompare(key(a)));
 
   const anim = listAnimate; listAnimate = false;
+  document.body.classList.toggle('no-notes', !state.notes.length);   // nothing to search or filter yet
   $('noteList').innerHTML = notes.length ? notes.map((n, idx) => {
     const names = n.speakers.map(s => s.name).filter(Boolean).join(', ');
     const cls = (n.id === currentId ? ' active' : '') + (anim ? ' in' : '') + (n.id === justAdded ? ' born' : '');
     return `<div class="note-item${cls}" data-id="${n.id}" style="--h:${hue(n.eventType)};--i:${Math.min(idx, 12)}">
       <div class="t">${esc(n.title || 'Untitled sermon')}</div>
       <div><span class="pill-ampm ${n.period === 'PM' ? 'pm' : 'am'}">${n.period === 'PM' ? ic('moon') + ' PM' : ic('sun') + ' AM'}</span>${n.eventType ? `<span class="tag" style="--h:${hue(n.eventType)}">${esc(n.eventType)}</span>` : ''}</div>
-      ${(() => { const t = previewText(n.notesHtml); return t ? `<div class="snip">${esc(t)}</div>` : ''; })()}
+      ${(() => { const t = noteText(n).preview; return t ? `<div class="snip">${esc(t)}</div>` : ''; })()}
       <div class="m">${ic('calendar')} ${fmtDate(n.date)}${n.scripture.trim() ? ` · ${ic('book')} ${esc(n.scripture.trim())}` : ''}</div>
       ${names ? `<div class="m">${ic('person')} ${esc(names)}</div>` : ''}
     </div>`;
@@ -1307,8 +1319,11 @@ function showList() {
 addEventListener('popstate', () => { if (history.state?.sn !== 'note') { setView('list'); renderList(); } });
 if (history.state?.sn === 'note') history.replaceState(null, '');      // a reload always starts on the list
 setView('list');
-['search','filterEvent','filterSpeaker','filterPeriod','sortBy'].forEach(id =>
+['filterEvent','filterSpeaker','filterPeriod','sortBy'].forEach(id =>
   $(id).addEventListener('input', () => { listAnimate = true; renderList(); }));
+// search waits for a short pause in typing, so every keystroke stays instant
+let searchTimer;
+$('search').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(renderList, 120); });
 
 /* ---------- Editor ---------- */
 let lastShownId;
